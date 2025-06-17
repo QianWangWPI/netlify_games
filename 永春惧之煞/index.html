@@ -10,6 +10,15 @@
       margin: 0;
       padding: 0;
     }
+    #main-title {
+      position: absolute;
+      top: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-weight: bold;
+      font-size: 60px;
+      color: black;
+    }
     #main-menu {
       position: relative;
       width: 100%;
@@ -150,6 +159,7 @@
 
   <!-- 主界面 -->
   <div id="main-menu">
+    <div id="main-title">惧之煞平台小游戏</div>
     <div id="boss-circle">BOSS</div>
     <button class="platform-button" id="btn-south" onclick="enterGame('south')">左边台子（南方）</button>
     <button class="platform-button" id="btn-west"  onclick="enterGame('west')">中间台子（西方）</button>
