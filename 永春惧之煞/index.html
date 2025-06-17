@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>惧之煞平台 - 精准扇形版</title>
+  <title>惧之煞平台 - 完整对齐版</title>
   <style>
     body {
       background-color: #222;
@@ -28,25 +28,24 @@
     const centerY = canvas.height / 2;
     const radius = 180;
     const totalSectors = 8;
-    let playerSector = 0;
+    let playerSector = 0; // 默认初始在左边
 
     function drawPlatform() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // 画扇形
       for (let i = 0; i < totalSectors; i++) {
+        // 角度逻辑：-90 让0 sector在最左边，+22.5做整体旋转
         const startAngle = (i * 45 - 90 + 22.5) * Math.PI / 180;
         const endAngle = ((i + 1) * 45 - 90 + 22.5) * Math.PI / 180;
+
         ctx.beginPath();
         ctx.moveTo(centerX, centerY);
         ctx.arc(centerX, centerY, radius, startAngle, endAngle);
         ctx.closePath();
-        if (i === playerSector) {
-          ctx.fillStyle = 'green';
-        } else {
-          ctx.fillStyle = 'white';
-        }
+
+        ctx.fillStyle = (i === playerSector) ? 'green' : 'white';
         ctx.fill();
+
         ctx.strokeStyle = 'black';
         ctx.lineWidth = 2;
         ctx.stroke();
