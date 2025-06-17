@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>惧之煞平台 - 完整对齐版</title>
+  <title>惧之煞平台 - 正确初始定位</title>
   <style>
     body {
       background-color: #222;
@@ -28,13 +28,14 @@
     const centerY = canvas.height / 2;
     const radius = 180;
     const totalSectors = 8;
-    let playerSector = 0; // 默认初始在左边
+    
+    // 初始让玩家出现在最左边的扇形（实际是 sector 5）
+    let playerSector = 5;
 
     function drawPlatform() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       for (let i = 0; i < totalSectors; i++) {
-        // 角度逻辑：-90 让0 sector在最左边，+22.5做整体旋转
         const startAngle = (i * 45 - 90 + 22.5) * Math.PI / 180;
         const endAngle = ((i + 1) * 45 - 90 + 22.5) * Math.PI / 180;
 
