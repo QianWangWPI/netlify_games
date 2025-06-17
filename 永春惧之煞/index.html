@@ -2,82 +2,321 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>惧之煞平台 - 加入口标记</title>
+  <title>惧之煞三平台完整模拟器</title>
   <style>
     body {
-      background-color: #fdf5c4; /* 淡黄色背景 */
+      background-color: #fdf5c4;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    #main-menu {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+    }
+    #boss-circle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 400px;
+      height: 400px;
+      margin-left: -200px;
+      margin-top: -200px;
+      border: 5px solid black;
+      border-radius: 50%;
+      background-color: #ccc;
       display: flex;
       justify-content: center;
       align-items: center;
+      font-size: 60px;
+      font-weight: bold;
+    }
+    .platform-button {
+      position: absolute;
+      font-size: 32px;
+      padding: 15px 40px;
+      cursor: pointer;
+    }
+    #btn-south {
+      top: calc(50% + 250px);
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    #btn-west {
+      top: 50%;
+      left: calc(50% - 700px);
+      transform: translateY(-50%);
+    }
+    #btn-north {
+      top: calc(50% - 300px);
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    #game-area {
+      display: none;
+      position: relative;
+      width: 100%;
       height: 100vh;
     }
     canvas {
       background-color: #ccc;
       border: 2px solid black;
       border-radius: 50%;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    #entrance-label {
+      position: absolute;
+      left: calc(50% - 360px);
+      top: 50%;
+      transform: translateY(-50%);
+      font-weight: bold;
+      font-size: 52px;
+      color: black;
+    }
+    #instruction-label {
+      position: absolute;
+      top: calc(50% - 460px);
+      left: 50%;
+      transform: translateX(-50%);
+      font-weight: bold;
+      font-size: 36px;
+      color: black;
+    }
+    #position-label {
+      position: absolute;
+      top: calc(50% + 260px);
+      left: 50%;
+      transform: translateX(-50%);
+      font-weight: bold;
+      font-size: 44px;
+      color: black;
+    }
+    #wave-label {
+      position: absolute;
+      top: calc(50% - 300px);
+      left: 50%;
+      transform: translateX(-50%);
+      font-weight: bold;
+      font-size: 48px;
+      color: black;
+    }
+    #penalty-label {
+      position: absolute;
+      right: 240px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-weight: bold;
+      font-size: 44px;
+      color: black;
+    }
+    #warning-label {
+      position: absolute;
+      right: 230px;
+      top: calc(50% - 160px);
+      font-weight: bold;
+      font-size: 48px;
+      color: red;
+      display: none;
+    }
+    #restart-button {
+      position: absolute;
+      top: 40px;
+      font-weight: bold;
+      font-size: 32px;
+      padding: 8px 20px;
+      cursor: pointer;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    #return-button {
+      position: absolute;
+      top: calc(50% - 400px);
+      left: 50%;
+      transform: translateX(-50%);
+      font-weight: bold;
+      font-size: 32px;
+      padding: 8px 20px;
+      cursor: pointer;
+      display: none;
     }
   </style>
 </head>
+
 <body>
-  <canvas id="platform" width="400" height="400"></canvas>
+
+  <!-- 主界面 -->
+  <div id="main-menu">
+    <div id="boss-circle">BOSS</div>
+    <button class="platform-button" id="btn-south" onclick="enterGame('south')">左边台子（南方）</button>
+    <button class="platform-button" id="btn-west"  onclick="enterGame('west')">中间台子（西方）</button>
+    <button class="platform-button" id="btn-north" onclick="enterGame('north')">右边台子（北方）</button>
+  </div>
+
+  <!-- 游戏界面 -->
+  <div id="game-area">
+    <div id="entrance-label">入口处</div>
+    <div id="instruction-label">游戏方法：通过←→键移动位置来躲避射击</div>
+    <div id="position-label"></div>
+    <div id="wave-label">准备中...</div>
+    <div id="penalty-label">罚款次数: <span style="color:red">0</span></div>
+    <div id="warning-label">想被秦sir喷死么！？</div>
+    <button id="restart-button">重新开始</button>
+    <button id="return-button" onclick="returnToMain()">返回BOSS台子</button>
+    <canvas id="platform" width="400" height="400"></canvas>
+  </div>
 
   <script>
-    const canvas = document.getElementById('platform');
-    const ctx = canvas.getContext('2d');
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-    const radius = 180;
-    const totalSectors = 8;
-    let playerSector = 5; // 初始最左边扇区
+    const platforms = {
+      south: { name: "左边台子（地图南方）", waves: [[0,4],[7,3],[6,2],[5,1]] },
+      west:  { name: "中间台子（地图西方）", waves: [[5,0,1,2],[7,2,3,4],[1,4,5,6],[3,6,7,0]] },
+      north: { name: "右边台子（地图北方）", waves: [[1,2,4,5],[3,4,6,7],[5,6,0,1],[7,0,2,3]] }
+    };
+
+    let waves = [], platformName = '';
+    let canvas, ctx, centerX, centerY, radius = 180, totalSectors = 8;
+    let playerSector, penaltyCount, currentWave, flashing, flashDuration = 1000;
+    let dangerActive, alreadyPenalized;
+
+    function enterGame(type) {
+      waves = platforms[type].waves;
+      platformName = platforms[type].name;
+      document.getElementById("main-menu").style.display = "none";
+      document.getElementById("game-area").style.display = "block";
+      document.getElementById("position-label").textContent = platformName;
+      document.getElementById("return-button").style.display = "none";
+      initGame();
+    }
+
+    function returnToMain() {
+      document.getElementById("game-area").style.display = "none";
+      document.getElementById("main-menu").style.display = "block";
+      window.removeEventListener('keydown', handleKey);
+    }
+
+    function initGame() {
+      canvas = document.getElementById('platform');
+      ctx = canvas.getContext('2d');
+      centerX = canvas.width / 2;
+      centerY = canvas.height / 2;
+      document.getElementById("restart-button").onclick = restart;
+      window.addEventListener('keydown', handleKey);
+      restart();
+    }
+
+    function restart() {
+      playerSector = 5;
+      penaltyCount = 0;
+      currentWave = 0;
+      flashing = false;
+      dangerActive = false;
+      alreadyPenalized = new Set();
+      updateLabels("准备中...");
+      updatePenalty();
+      drawPlatform();
+      setTimeout(nextWave, 500);
+    }
 
     function drawPlatform() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-
       for (let i = 0; i < totalSectors; i++) {
         const startAngle = (i * 45 - 90 + 22.5) * Math.PI / 180;
         const endAngle = ((i + 1) * 45 - 90 + 22.5) * Math.PI / 180;
-
         ctx.beginPath();
         ctx.moveTo(centerX, centerY);
         ctx.arc(centerX, centerY, radius, startAngle, endAngle);
         ctx.closePath();
 
-        ctx.fillStyle = (i === playerSector) ? 'green' : 'white';
+        let fillColor = 'white';
+        if (i === playerSector) fillColor = 'green';
+        if (flashing && waves[currentWave].includes(i)) fillColor = 'red';
+        ctx.fillStyle = fillColor;
         ctx.fill();
-
         ctx.strokeStyle = 'black';
         ctx.lineWidth = 2;
         ctx.stroke();
       }
-
-      drawEntranceLabel();
     }
 
-    function drawEntranceLabel() {
-      // 计算入口位置（绿色扇形的左边位置）
-      const angle = ((playerSector * 45 - 90 + 22.5) - 45) * Math.PI / 180;
-      const labelRadius = radius + 30;
-      const labelX = centerX + labelRadius * Math.cos(angle);
-      const labelY = centerY + labelRadius * Math.sin(angle);
-
-      ctx.font = 'bold 16px Arial';
-      ctx.fillStyle = 'black';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('入口处', labelX, labelY);
+    function updateLabels(text) {
+      document.getElementById("wave-label").textContent = text;
     }
 
-    drawPlatform();
+    function updatePenalty() {
+      document.getElementById("penalty-label").innerHTML = `罚款次数: <span style="color:red">${penaltyCount}</span>`;
+    }
 
-    window.addEventListener('keydown', (e) => {
+    function showWarning() {
+      const warning = document.getElementById("warning-label");
+      warning.style.display = "block";
+      setTimeout(() => { warning.style.display = "none"; }, 1000);
+    }
+
+    function checkPenalty() {
+      if (waves[currentWave].includes(playerSector) && !alreadyPenalized.has(playerSector)) {
+        penaltyCount++;
+        showWarning();
+        alreadyPenalized.add(playerSector);
+        updateLabels(`Wave #${currentWave + 1}`);
+        updatePenalty();
+      }
+    }
+
+    function startDanger() {
+      flashing = true;
+      updateLabels(`Wave #${currentWave + 1}`);
+      drawPlatform();
+      dangerActive = true;
+      alreadyPenalized.clear();
+      checkPenalty();
+      const interval = setInterval(() => {
+        if (!dangerActive) clearInterval(interval);
+        else checkPenalty();
+      }, 100);
+      setTimeout(() => {
+        flashing = false;
+        dangerActive = false;
+        currentWave++;
+        if (currentWave >= waves.length) {
+          const totalFine = penaltyCount * 1000;
+          if (totalFine > 0) {
+            document.getElementById("wave-label").innerHTML = `恭喜你！本次罚款金额：<span style="color:red">${totalFine}</span>`;
+          } else {
+            document.getElementById("wave-label").textContent = "恭喜你！完美通关";
+          }
+          updatePenalty();
+          document.getElementById("return-button").style.display = "block";
+        } else nextWave();
+        drawPlatform();
+      }, flashDuration);
+    }
+
+    function nextWave() {
+      let countdown = (currentWave === 0) ? 5 : 1.5;
+      const tick = () => {
+        updateLabels(`倒计时: ${countdown.toFixed(1)}s`);
+        if (countdown <= 0) startDanger();
+        else {
+          countdown -= 0.1;
+          setTimeout(tick, 100);
+        }
+      };
+      tick();
+    }
+
+    function handleKey(e) {
       if (e.key === 'ArrowLeft') {
         playerSector = (playerSector - 1 + totalSectors) % totalSectors;
-        drawPlatform();
       } else if (e.key === 'ArrowRight') {
         playerSector = (playerSector + 1) % totalSectors;
-        drawPlatform();
       }
-    });
+      drawPlatform();
+      if (dangerActive) checkPenalty();
+    }
   </script>
+
 </body>
 </html>
