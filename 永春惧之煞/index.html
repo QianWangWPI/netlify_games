@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>惧之煞平台 - 正确初始定位</title>
+  <title>惧之煞平台 - 加入口标记</title>
   <style>
     body {
-      background-color: #222;
+      background-color: #fdf5c4; /* 淡黄色背景 */
       display: flex;
       justify-content: center;
       align-items: center;
@@ -28,9 +28,7 @@
     const centerY = canvas.height / 2;
     const radius = 180;
     const totalSectors = 8;
-    
-    // 初始让玩家出现在最左边的扇形（实际是 sector 5）
-    let playerSector = 5;
+    let playerSector = 5; // 初始最左边扇区
 
     function drawPlatform() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -51,6 +49,22 @@
         ctx.lineWidth = 2;
         ctx.stroke();
       }
+
+      drawEntranceLabel();
+    }
+
+    function drawEntranceLabel() {
+      // 计算入口位置（绿色扇形的左边位置）
+      const angle = ((playerSector * 45 - 90 + 22.5) - 45) * Math.PI / 180;
+      const labelRadius = radius + 30;
+      const labelX = centerX + labelRadius * Math.cos(angle);
+      const labelY = centerY + labelRadius * Math.sin(angle);
+
+      ctx.font = 'bold 16px Arial';
+      ctx.fillStyle = 'black';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('入口处', labelX, labelY);
     }
 
     drawPlatform();
