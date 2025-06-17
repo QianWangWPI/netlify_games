@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>惧之煞小平台移动 - v2</title>
+  <style>
+    body {
+      background-color: #222;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: white;
+      font-family: sans-serif;
+    }
+    .platform {
+      position: relative;
+      width: 400px;
+      height: 400px;
+      border-radius: 50%;
+      border: 5px solid white;
+      transform: rotate(22.5deg); /* 整个平台顺时针转动22.5度 */
+    }
+    .sector {
+      position: absolute;
+      width: 50%;
+      height: 50%;
+      top: 50%;
+      left: 50%;
+      transform-origin: 0% 0%;
+      clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%);
+      background-color: #555;
+      border-left: 2px solid white;
+    }
+    .active {
+      background-color: green !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="platform" id="platform"></div>
+
+  <script>
+    const platform = document.getElementById('platform');
+    const totalSectors = 8;
+    let playerSector = 0;
+    const sectors = [];
+
+    // 画出8个扇区
+    for (let i = 0; i < totalSectors; i++) {
+      const sector = document.createElement('div');
+      sector.classList.add('sector');
+      sector.style.transform = `rotate(${i * 45}deg) skewY(-45deg) scaleY(2)`;
+      platform.appendChild(sector);
+      sectors.push(sector);
+    }
+
+    function updateSectors() {
+      sectors.forEach((sector, index) => {
+        if (index === playerSector) {
+          sector.classList.add('active');
+        } else {
+          sector.classList.remove('active');
+        }
+      });
+    }
+
+    // 初始化
+    updateSectors();
+
+    // 监听左右键移动
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') {
+        playerSector = (playerSector - 1 + totalSectors) % totalSectors;
+      } else if (e.key === 'ArrowRight') {
+        playerSector = (playerSector + 1) % totalSectors;
+      }
+      updateSectors();
+    });
+  </script>
+</body>
+</html>
